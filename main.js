@@ -12,6 +12,8 @@ const path = require('path')
 const url = require('url')
 
 const ks = require('node-key-sender');
+ks.setOption('globalDelayBetweenMillisec', 10);
+ks.setOption('globalDelayPressMillisec', 10);
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -50,9 +52,14 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-
+  let sending = false;
   ipcMain.on('send-key', (_, key) => {
-    ks.sendKey(key);
+    if (sending) return;
+
+    sending = true;
+    ks.sendKey(key).then(() => {
+      sending = false;
+    });
   })
 
   createWindow();

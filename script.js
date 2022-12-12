@@ -49,15 +49,21 @@ function isJesus(poseLandmarks) {
   ];
   const baseline = poseLandmarks[mpPose.POSE_LANDMARKS_RIGHT.RIGHT_SHOULDER].y;
   const ALIGN_THRESHOLD = 0.07;
+  const VIS_THRESHOLD = 0.65;
 
   let lastX = 0;
   const aligned = ARMS.every(jointIdx => {
     const joint = poseLandmarks[jointIdx];
-    const isAligned = joint.visibility >= 0.65 && Math.abs(joint.y - baseline) < ALIGN_THRESHOLD && joint.x > lastX;
+    const isAligned = joint.visibility >= VIS_THRESHOLD && Math.abs(joint.y - baseline) < ALIGN_THRESHOLD && joint.x > lastX;
     lastX = joint.x;
     return isAligned;
   });
   currentPose = aligned ? 'T' : '';
+
+  if (currentPose) {
+    window.electronAPI.sendKey(currentPose.toLowerCase());
+  }
+
   showPose.textContent = currentPose;
 }
 
@@ -95,6 +101,7 @@ function onResults(results) {
     isJesus(results.poseLandmarks);
 
     drawingUtils.drawConnectors(canvasCtx, results.poseLandmarks, mpPose.POSE_CONNECTIONS, { visibilityMin: 0.65, color: 'white' });
+    // LEFT is ORANGE, RIGHT is BLUE
     drawingUtils.drawLandmarks(canvasCtx, Object.values(mpPose.POSE_LANDMARKS_LEFT)
       .map(index => results.poseLandmarks[index]), { visibilityMin: 0.65, color: 'white', fillColor: 'rgb(255,138,0)' });
     drawingUtils.drawLandmarks(canvasCtx, Object.values(mpPose.POSE_LANDMARKS_RIGHT)
